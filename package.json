@@ -1,0 +1,21 @@
+{
+  "name": "json-traversal-core",
+  "version": "1.2.1",
+  "description": "Focused table specification builder with configurable rows and cells",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npx @keshavsoft/build-cli"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}
