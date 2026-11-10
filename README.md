@@ -1,211 +1,186 @@
-# json-renderers-build-table
+# JSON Traversal Core
 
-> Build a complete HTML table JSON specification from columns + data — declaratively.
+> A reusable engine for walking through a JSON tree and calling your function as nodes are visited.
 
----
+**JSON Traversal Core is about traversal, not JSONPath and not file generation.**
 
-## Why this exists
+The idea is simple: provide a JSON value and a callback. The traversal engine walks through nested objects and arrays, while your callback decides what to do with each visited node.
 
-Building a `<table>` from raw data is repetitive work that quickly becomes messy:
+The repository currently contains two evolving implementations:
 
-- You scatter `createElement` calls across your codebase
-- Adding a column means touching the header, the body cells, the footer, and the colgroup
-- Swapping a cell style for one column (e.g. a badge instead of plain text) means rewriting imperative DOM code
-- Testing is hard because the logic is entangled with the DOM
+- **V1** — the initial object/array traversal experiment.
+- **V2** — an iteration exploring improved path construction and using traversal callbacks to create a matching folder tree.
 
-This library inverts that. **You describe what the table should look like in JSON.** The library stamps it out.
-
-The result is a plain JSON object — a DOM specification — that you hand to a renderer like [`@keshavsoft/json-to-tag`](https://keshavsoft.github.io/json-to-tag/dist/v9/min.js). The renderer turns it into real DOM elements. The builder never touches the DOM.
+V2 is still under development. Its current array handling and callback propagation need correction before it can be treated as a reliable general-purpose traversal engine.
 
 ---
 
-## The core idea: declarative instructions over a shared registry
+## Why this project exists
 
-Every build runs through three layers:
-
-```
-1. Registry      holds { data, base, spec }
-                   data  = your columns + rows
-                   base  = the empty table skeleton (colgroup, thead, tbody, tfoot)
-                   spec  = named cell/row templates
-
-2. Instructions  a JSON array that says:
-                   "read THIS source path,
-                    apply THIS template,
-                    write the result to THIS destination"
-
-3. writePath     navigates the base tree by data-role anchor
-                 and writes using a named action
-                 (set / push / unshift / pushToRows / ...)
-```
-
-Because the instructions are JSON, you can read a build sequence without tracing any JavaScript. Each instruction has a `narration` field that explains itself in plain English.
-
----
-
-## How a table gets built (v18 `simple`)
-
-```
-columns.json     batches.json
-      \               /
-       simple({ columns, data })
-              |
-              |  registry = { data, base, spec }
-              |
-              +-- single instructions (fromCollection)
-              |     colgroup children   (one <col> per column)
-              |     thead > tr children (one <th> per column)
-              |
-              +-- double instructions (twoDimensional)
-                    tbody children      (one <tr> per row, one <td> per column)
-              |
-              +-- returns base (fully populated JSON tree)
-```
-
-The returned `base` is a plain JavaScript object:
+A JSON document is already a tree:
 
 ```json
 {
-  "tagName": "table",
-  "attributes": { "class": "table table-hover ..." },
-  "children": [
-    { "tagName": "colgroup", "children": [ "..." ] },
-    { "tagName": "thead",    "children": [ { "tagName": "tr", "children": [ "..." ] } ] },
-    { "tagName": "tbody",    "children": [ "..." ] },
-    { "tagName": "tfoot",    "children": [ "..." ] }
-  ]
+    "api": {
+        "v1": {
+            "clinics": {
+                "all": "show"
+            }
+        }
+    }
 }
 ```
 
-Hand that to any spec-to-DOM renderer and you get a real table element.
-
----
-
-## Quick start
+When the structure is known, a developer can access a value directly:
 
 ```js
-import { simple } from "./docs/dist/v18/min.js";
+const value = data.api.v1.clinics.all;
+```
 
-const columns = [
-    {
-        columnName: "itemName",
-        width: "300px",
-        template: { body: { tr: "buildBodyTr", cell: "buildBodyCell" } }
-    },
-    {
-        columnName: "baseUnit",
-        width: "200px",
-        template: { body: { tr: "buildBodyTr", cell: "buildBodyCell" } }
-    },
-    {
-        columnName: "batches",
-        width: "100px",
-        template: { body: { tr: "buildBodyTr", cell: "buttonCell" } }
+But sometimes we do not want to access only one known property. We want to walk the entire structure and perform an operation at every node.
+
+Examples:
+
+- Print every key, value, and path.
+- Inspect or validate every node.
+- Build a folder hierarchy from JSON keys.
+- Later, generate files or connect implementation instructions to selected paths.
+
+Instead of writing a new recursive loop for every task, this project explores one reusable traversal mechanism.
+
+## The central idea
+
+```text
+JSON input
+   |
+   v
+Traversal engine
+   |
+   +--> visits a node
+   |       |
+   |       +--> calls the supplied callback
+   |
+   +--> enters nested objects
+   |
+   +--> enters arrays
+```
+
+The traversal engine should know how to walk the JSON tree. It should not know whether the callback prints information, creates folders, validates data, or performs another task.
+
+That separation is the foundation of this project.
+
+## Intended usage
+
+```js
+import startFunc from "./src/v2/index.js";
+
+const data = {
+    api: {
+        v1: {
+            clinics: {
+                all: "show"
+            }
+        }
     }
-];
+};
 
-const data = [
-    { itemName: "0.11-25", baseUnit: "kgs", batches: 1 },
-    { itemName: "0.11-30", baseUnit: "kgs", batches: 0 }
-];
+const visitNode = (key, value, path) => {
+    console.log({ key, value, path });
+};
 
-const spec = simple({ columns, data });
-
-// spec is a plain JSON tree — pass it to your DOM renderer
-const element = window.ks.jsonToTag.buildSpecElement(spec);
-document.getElementById("container").appendChild(element);
+startFunc(data, visitNode);
 ```
 
----
+The callback receives information about each property visited. The exact path convention is being refined between versions; see [Version history](docs/versions.md).
 
-## What each column config means
+## Folder-tree experiment
 
-| Field | Purpose |
+One concrete use case is turning every JSON key into a directory.
+
+For the JSON above, the desired output is:
+
+```text
+generated/
+└── api/
+    └── v1/
+        └── clinics/
+            └── all/
+```
+
+The value `"show"` is not used to create a file. In this experiment, **keys become folders**.
+
+The folder-generation callback is a consumer of the traversal engine. It is deliberately separate from the traversal core.
+
+A complete implementation should:
+1. Read a JSON input.
+2. Traverse every object and array consistently.
+3. Pass each node's key and complete path to the callback.
+4. Create corresponding directories under a predictable `generated/` directory.
+5. Be safe to run repeatedly by using recursive directory creation.
+
+## JSONPath and traversal are different
+
+JSONPath is a query language for selecting values from JSON. It is useful when you want to ask questions such as “find every node whose method is `GET`.”
+
+This project has a different primary goal: **visit the tree and invoke a callback as traversal proceeds**.
+
+| Need | Suitable approach |
 |---|---|
-| `columnName` | Maps to the data property on each row object |
-| `width` | Written into the `<col>` element in the colgroup |
-| `template.body.tr` | Key into `spec.json` — which `<tr>` template to use for body rows |
-| `template.body.cell` | Key into `spec.json` — which `<td>` template to use for this column's cells |
+| Read a known property such as `data.api.v1` | Direct JavaScript property access |
+| Select nodes using query expressions | JSONPath |
+| Visit every node and run custom logic | JSON traversal |
+| Create folders from every key | Traversal plus a folder-generation callback |
 
-You change the look of a column's cells by pointing `template.body.cell` at a different key in `spec.json`. No JavaScript changes needed.
+JSONPath may be useful alongside this project in the future, but it is not required for recursive traversal.
 
----
+## Current project layout
 
-## Cell templates (`spec.json`)
-
-Pre-built templates in `src/v18/spec.json`:
-
-| Key | Renders |
-|---|---|
-| `buildBodyCell` | Plain `<td>` with the row value as text |
-| `buttonCell` | `<td>` containing a `<button>` showing the aggregate count |
-| `buildHeader` | `<th>` with uppercase text |
-| `buildColGroup` | `<col>` with a width attribute |
-| `buildFooter` | `<td>` with a text `<input>` for footer rows |
-| `buildOption` | `<option>` element |
-| `buildSelect` | `<select>` container |
-| `buildDataList` | `<datalist>` container |
-
----
-
-## Why columns drive everything
-
-A column definition is the single source of truth for **one vertical slice** of the table:
-
-- its header cell (`buildHeader` template)
-- its width (`buildColGroup` template)
-- its body cell template (`template.body.cell`)
-- its footer cell (if enabled)
-
-Adding a column = adding one object to the columns array.  
-Removing a column = removing it.  
-The instructions loop over columns automatically.  
-There is no imperative "add a th, then add a td, then add a col" sequence to maintain.
-
----
-
-## Build
-
-```bash
-npm install
-npm run build
-# output: docs/dist/v18/min.js
+```text
+json-traversal-core/
+├── src/
+│   ├── index.js
+│   ├── v1/
+│   │   ├── index.js
+│   │   ├── ifObject.js
+│   │   └── ifArray.js
+│   └── v2/
+│       ├── index.js
+│       ├── ifObject.js
+│       └── ifArray.js
+├── test/
+│   ├── v1/
+│   │   └── data.json
+│   └── v2/
+│       ├── data.json
+│       └── index.js
+├── docs/
+└── README.md
 ```
 
-The Vite config auto-detects the highest `vN` folder under `src/` and builds that version. No config changes needed when a new version is added.
+## Status
 
----
+This repository is an active experiment, not yet a finished traversal package.
 
-## Run the sample
+- V1 records the original approach.
+- V2 explores improved path handling and a folder-generation use case.
+- V2 still needs reliable callback propagation through arrays and nested arrays.
+- Automated coverage for objects, arrays, mixed nesting, empty values, and repeatable folder creation is still needed.
 
-```bash
-npx serve
-# open http://localhost:PORT/samples/v18/simpleTable/
-```
+See [Architecture](docs/architecture.md), [Version history](docs/versions.md), and [Roadmap](docs/roadmap.md).
 
----
+## Design principles
 
-## Project structure
+1. **Generic core:** traversal must not depend on a specific application.
+2. **Callback-driven:** the caller decides what to do with visited nodes.
+3. **Complete paths:** each callback should receive an unambiguous path from the root.
+4. **Objects and arrays:** both must be traversed, including mixed and deeply nested structures.
+5. **No hidden side effects:** the core should not create files or folders itself.
+6. **Incremental versions:** keep earlier experiments available while improving the next version.
 
-```
-src/
-  v18/
-    index.js              exports { simple }
-    spec.json             named cell/row templates
-    simple/
-      index.js            the build runner (registry + instructions)
-      base.json           empty table skeleton with data-role anchors
-      instructions/
-        single.json       fromCollection instructions (colgroup, thead)
-        double.json       twoDimensional instruction (tbody)
-      writePath/
-        index.js          tree writer with named actions
+## Longer-term direction
 
-samples/
-  v18/
-    simpleTable/          live demo: columns.json + batches.json
+The motivating application is JSON-driven API generation. An API definition could become the single source of truth for a generated folder and file structure. A later instruction-processing stage could then populate selected files with implementation code.
 
-docs/
-  dist/
-    v18/min.js            pre-built bundle (committed, served via GitHub Pages)
-```
+That is a future consumer of this library—not a responsibility of the traversal core itself.
+
+The immediate goal is smaller: make traversal predictable, testable, and reusable.
