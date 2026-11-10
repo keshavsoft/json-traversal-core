@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JSONPath vs traversal · JSON Traversal Core</title>
+<link rel="stylesheet" href="story.css">
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">JSON Traversal Core · Project story</div><h1>JSONPath vs traversal</h1><p>They are related to JSON navigation, but they solve different problems.</p></div></header>
+<main><nav class="nav"><a href="index.html">Home</a><a href="02-how-traversal-works.html">Traversal</a><a href="04-folder-generation.html">Folder generation</a></nav>
+<section><h2>JSONPath selects nodes</h2><p>JSONPath is a query language. It is useful when you want to find values matching a query, such as every endpoint whose method is <code>GET</code>, even when those endpoints appear at different depths.</p>
+<h2>Our traversal engine visits nodes</h2><p>Our goal is to walk through the JSON tree and invoke our callback as each node is visited. It is not primarily a query language.</p>
+<table><thead><tr><th>Task</th><th>Approach</th></tr></thead><tbody>
+<tr><td>Read a known property</td><td>Direct JavaScript access</td></tr>
+<tr><td>Select nodes using expressions</td><td>JSONPath</td></tr>
+<tr><td>Visit every node and run custom logic</td><td>Traversal engine</td></tr>
+<tr><td>Create directories from keys</td><td>Traversal + folder-builder callback</td></tr>
+</tbody></table>
+<div class="note"><strong>Remember:</strong> JSONPath finds matching nodes; traversal visits the tree and gives our code an opportunity to act on each node.</div></section>
+</main>
+<div class="footer">JSON Traversal Core · An evolving exploration of generic JSON traversal.</div>
+</body></html>

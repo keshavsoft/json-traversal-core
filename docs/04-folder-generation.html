@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folder generation · JSON Traversal Core</title>
+<link rel="stylesheet" href="story.css">
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">JSON Traversal Core · Project story</div><h1>Folder generation</h1><p>A first consumer of the traversal engine: turn JSON keys into directories.</p></div></header>
+<main><nav class="nav"><a href="index.html">Home</a><a href="02-how-traversal-works.html">Traversal</a><a href="05-architecture-roadmap.html">Roadmap</a></nav>
+<section><h2>The example</h2><p>Given this JSON:</p><pre><code>{
+  "api": {
+    "v1": {
+      "clinics": {
+        "all": "show"
+      }
+    }
+  }
+}</code></pre><p>The desired folder tree is:</p><pre><code>generated/
+└── api/
+    └── v1/
+        └── clinics/
+            └── all/</code></pre>
+<p>In this experiment, every key becomes a folder, including the final <code>all</code> key. The value <code>"show"</code> does not become a file.</p></section>
+<section><h2>Keep responsibilities separate</h2><p>The traversal engine should only report nodes. A separate folder-builder callback uses the path information and Node.js filesystem functions to create directories.</p><pre><code>await mkdir(targetFolder, { recursive: true });</code></pre><p>Using a predictable output directory makes the result easy to inspect and safe to regenerate.</p></section>
+</main>
+<div class="footer">JSON Traversal Core · An evolving exploration of generic JSON traversal.</div>
+</body></html>

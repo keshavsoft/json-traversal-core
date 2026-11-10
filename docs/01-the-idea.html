@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The idea · JSON Traversal Core</title>
+<link rel="stylesheet" href="story.css">
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">JSON Traversal Core · Project story</div><h1>The idea</h1><p>A JSON document is already a tree. We want one reusable mechanism to visit that tree.</p></div></header>
+<main><nav class="nav"><a href="index.html">Home</a><a href="02-how-traversal-works.html">Traversal</a><a href="03-jsonpath-vs-traversal.html">JSONPath</a></nav>
+<section><h2>JSON already describes a hierarchy</h2><pre><code>{
+  "api": {
+    "v1": {
+      "clinics": {
+        "all": "show"
+      }
+    }
+  }
+}</code></pre>
+<p>When we know the exact structure, direct access is simple:</p><pre><code>const value = data.api.v1.clinics.all;</code></pre>
+<p>But sometimes we want to process the whole structure, not just one known property. We may want to inspect every key, validate every node, create a folder tree, or eventually generate API files.</p></section>
+<section><h2>The project goal</h2><p>Build a generic traversal core that can visit the nodes and notify a supplied callback. The core should not know whether the callback logs information, creates folders, validates data, or performs another task.</p><div class="note"><strong>One traversal engine. Many possible consumers.</strong></div></section>
+</main>
+<div class="footer">JSON Traversal Core · An evolving exploration of generic JSON traversal.</div>
+</body></html>

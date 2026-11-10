@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How traversal works · JSON Traversal Core</title>
+<link rel="stylesheet" href="story.css">
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">JSON Traversal Core · Project story</div><h1>How traversal works</h1><p>The traversal engine visits each property and passes context to a callback.</p></div></header>
+<main><nav class="nav"><a href="index.html">Home</a><a href="01-the-idea.html">The idea</a><a href="03-jsonpath-vs-traversal.html">JSONPath</a></nav>
+<section><h2>Callback-driven traversal</h2><pre><code>import startFunc from "./src/v2/index.js";
+
+const visitNode = (key, value, path) => {
+    console.log({ key, value, path });
+};
+
+startFunc(data, visitNode);</code></pre>
+<p>The intended callback receives the property key, its value, and its path. As the engine finds nested objects or arrays, it continues traversing and reports their nodes too.</p></section>
+<section><h2>Expected visits</h2><pre><code>api
+api.v1
+api.v1.clinics
+api.v1.clinics.all</code></pre>
+<p>The precise callback contract still needs to be finalized, especially how array indexes appear in paths and whether the root itself is reported.</p></section>
+<section><h2>What must be traversed?</h2><ul><li>Objects containing objects.</li><li>Objects containing arrays.</li><li>Arrays of primitive values.</li><li>Arrays of objects.</li><li>Nested and mixed arrays and objects.</li><li>Empty objects and arrays.</li></ul></section>
+</main>
+<div class="footer">JSON Traversal Core · An evolving exploration of generic JSON traversal.</div>
+</body></html>

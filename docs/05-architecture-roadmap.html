@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture and roadmap · JSON Traversal Core</title>
+<link rel="stylesheet" href="story.css">
+</head>
+<body>
+<header><div class="wrap"><div class="eyebrow">JSON Traversal Core · Project story</div><h1>Architecture and roadmap</h1><p>Keep the core generic. Add API generation as a separate layer later.</p></div></header>
+<main><nav class="nav"><a href="index.html">Home</a><a href="01-the-idea.html">The idea</a><a href="04-folder-generation.html">Folder generation</a></nav>
+<section><h2>Separation of responsibilities</h2><div class="grid">
+<div class="tile"><h3>1. JSON definition</h3><p>Describes the tree or API structure.</p></div>
+<div class="tile"><h3>2. Traversal core</h3><p>Visits nodes and reports key, value, and path.</p></div>
+<div class="tile"><h3>3. Structure generator</h3><p>Creates folders and files from selected paths.</p></div>
+<div class="tile"><h3>4. Instruction processor</h3><p>Later inserts or updates implementation content.</p></div>
+</div></section>
+<section><h2>V1 and V2 status</h2><table><thead><tr><th>Version</th><th>Purpose</th><th>Status</th></tr></thead><tbody>
+<tr><td>V1</td><td>Initial object/array traversal experiment</td><td>Early implementation; array handling and callback propagation incomplete</td></tr>
+<tr><td>V2</td><td>Path refinement and folder-generation experiment</td><td>Work in progress; array traversal and callback propagation need correction</td></tr>
+</tbody></table><div class="note warn"><strong>Important:</strong> the current V2 should not yet be described as a stable, fully tested general-purpose traversal package.</div></section>
+<section><h2>Next steps</h2><ol>
+<li>Finalize callback arguments and path format.</li><li>Correct object, array, and mixed nested traversal.</li><li>Add tests for arrays, nested arrays, empty values, and primitive values.</li><li>Make folder generation a separate, repeatable consumer.</li><li>Only then explore API folder/file generation and instruction-driven implementation.</li>
+</ol></section>
+<section><h2>Longer-term vision</h2><p>An API-definition JSON can become the single source of truth. One stage generates the folder and file structure. A later stage consumes implementation instructions and fills selected files. That is the direction we are exploring—not a responsibility to add to the traversal core today.</p></section>
+</main>
+<div class="footer">JSON Traversal Core · An evolving exploration of generic JSON traversal.</div>
+</body></html>
